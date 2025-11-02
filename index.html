@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPLAY 纳新题</title>
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" id="highlight-light">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="highlight-dark" disabled>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax 已就绪');
+                    });
+                }
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    
+    <div class="container">
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="题目列表">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <h1>🎮 IPLAY</h1>
+                    <p class="subtitle">纳新题</p>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="关闭侧边栏">
+                    ✕
+                </button>
+            </div>
+            <nav class="problem-list">
+                <h2>题目列表</h2>
+                <ul id="problemList" role="list"></ul>
+            </nav>
+            <footer class="sidebar-footer">
+                <p>2025 IPLAY</p>
+            </footer>
+        </aside>
+
+        <main class="main-content" role="main">
+            <header class="header">
+                <div class="header-content">
+                    <button class="btn btn-icon mobile-menu-btn" id="mobileMenuBtn" aria-label="显示菜单">
+                        <span class="theme-icon">☰</span>
+                    </button>
+                    <h1 id="pageTitle">IPLAY 纳新题</h1>
+                    <div class="header-actions">
+                        <button id="toggleTheme" class="btn btn-icon" aria-label="切换主题">
+                            <span class="theme-icon" aria-hidden="true">🌙</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <section id="welcomePage" class="welcome-page">
+                    <div class="welcome-card">
+                        <h2>IPLAY纳新题</h2>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-number" id="totalProblems">11</div>
+                                <div class="stat-label">题目总数</div>
+                            </div>
+                        </div>
+                        <p class="instruction">👈 从左侧选择一道题目查看</p>
+                    </div>
+                </section>
+
+                <article id="problemContent" class="problem-content" style="display: none;">
+                    <div class="tabs" role="tablist">
+                        <button class="tab-btn active" data-tab="problem" role="tab" aria-selected="true" aria-controls="problemTab">
+                            <span class="tab-icon" aria-hidden="true">📝</span> 题目
+                        </button>
+                        <button class="tab-btn" data-tab="solution" role="tab" aria-selected="false" aria-controls="solutionTab">
+                            <span class="tab-icon" aria-hidden="true">💡</span> 题解
+                        </button>
+                    </div>
+
+                    <div class="tab-content">
+                        <div id="problemTab" class="tab-pane active" role="tabpanel" aria-labelledby="problem-tab">
+                            <div class="content-box">
+                                <div id="problemMarkdown"></div>
+                            </div>
+                        </div>
+                        <div id="solutionTab" class="tab-pane" role="tabpanel" aria-labelledby="solution-tab">
+                            <div class="content-box">
+                                <div id="solutionCode"></div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
