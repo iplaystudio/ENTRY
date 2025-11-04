@@ -6,16 +6,15 @@
 // 获取方式：查看 FIREBASE_SETUP.md 文件创建 Firebase 项目
 // 当前默认使用本地存储模式
 const firebaseConfig = {
-    // 将以下内容替换为你的 Firebase 配置
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-project.firebaseapp.com",
-    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef1234567890"
+    apiKey: "AIzaSyDjekObR5bIb0H8pyWhYIyVaP4EpvWbCug",
+    authDomain: "iplay-comments.firebaseapp.com",
+    databaseURL: "https://iplay-comments-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "iplay-comments",
+    storageBucket: "iplay-comments.firebasestorage.app",
+    messagingSenderId: "916268939319",
+    appId: "1:916268939319:web:ede9413fc33528cf35e7b2",
+    measurementId: "G-83GHTNGYY4"
 };
-
 // 检测是否为示例配置
 const isExampleConfig = firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConfig.apiKey.includes("Dummy");
 
