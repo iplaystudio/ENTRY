@@ -482,7 +482,25 @@ function initComments(problemId) {
 // 页面加载时初始化
 let listenersSetup = false;
 
-window.addEventListener('load', () => {
+// 等待 Firebase SDK 加载完成
+function waitForFirebase(callback, maxAttempts = 50) {
+    let attempts = 0;
+    const checkFirebase = setInterval(() => {
+        attempts++;
+        if (typeof firebase !== 'undefined') {
+            clearInterval(checkFirebase);
+            console.log('✅ Firebase SDK 已加载');
+            callback();
+        } else if (attempts >= maxAttempts) {
+            clearInterval(checkFirebase);
+            console.warn('⚠️ Firebase SDK 加载超时，使用本地存储');
+            callback();
+        }
+    }, 100);
+}
+
+// 初始化函数
+function initializeCommentSystem() {
     console.log('评论系统开始初始化...');
     initFirebase();
     
@@ -492,16 +510,16 @@ window.addEventListener('load', () => {
         listenersSetup = true;
         console.log('评论监听器已设置');
     }
-});
+}
 
-// 如果 load 事件已经触发，立即初始化
-if (document.readyState === 'complete') {
-    console.log('页面已加载，立即初始化评论系统');
-    initFirebase();
-    if (!listenersSetup) {
-        setupCommentListeners();
-        listenersSetup = true;
-    }
+// 页面加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        waitForFirebase(initializeCommentSystem);
+    });
+} else {
+    // DOM 已经加载完成
+    waitForFirebase(initializeCommentSystem);
 }
 
 // 导出给全局使用
