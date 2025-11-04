@@ -2,27 +2,36 @@
 // Firebase 配置与初始化
 // ============================================
 
-// Firebase 配置 - 公开的测试配置（适用于 GitHub Pages）
-// 这是一个公开的测试数据库，任何人都可以使用
-// 如果需要私有配置，请查看 FIREBASE_SETUP.md
+// Firebase 配置 - 请替换为你自己的真实配置
+// 获取方式：查看 FIREBASE_SETUP.md 文件创建 Firebase 项目
+// 当前默认使用本地存储模式
 const firebaseConfig = {
-    apiKey: "AIzaSyC8LQ7YqEGj-qH5h8vGrJfLZPb6TZ0xE3s",
-    authDomain: "iplay-comments-demo.firebaseapp.com",
-    databaseURL: "https://iplay-comments-demo-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "iplay-comments-demo",
-    storageBucket: "iplay-comments-demo.appspot.com",
-    messagingSenderId: "428510649012",
-    appId: "1:428510649012:web:8f3b5c6e4a2d1f0e9c7b8a"
+    // 将以下内容替换为你的 Firebase 配置
+    apiKey: "YOUR_API_KEY",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdef1234567890"
 };
 
 // 检测是否为示例配置
-const isExampleConfig = false; // 使用真实配置
+const isExampleConfig = firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConfig.apiKey.includes("Dummy");
 
 // 初始化 Firebase
 let database = null;
 let initialized = false;
 
 function initFirebase() {
+    // 如果是示例配置，直接使用本地存储
+    if (isExampleConfig) {
+        console.log('💾 使用本地存储模式（评论仅保存在浏览器中）');
+        console.log('💡 提示：查看 FIREBASE_SETUP.md 配置 Firebase 实现云端同步');
+        initLocalStorage();
+        return;
+    }
+
     try {
         if (typeof firebase === 'undefined') {
             console.warn('⚠️ Firebase SDK 未加载，使用本地存储模式');
@@ -44,7 +53,7 @@ function initFirebase() {
 }
 
 function showConfigWarning() {
-    // 已使用真实配置，不显示警告
+    // 配置警告相关代码
 }
 
 // 本地存储降级方案
@@ -329,6 +338,22 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'comment-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
 // ============================================
 // 事件处理
 // ============================================
@@ -337,6 +362,13 @@ function setupCommentListeners() {
     const input = document.getElementById('commentInput');
     const charCount = document.getElementById('charCount');
     const submitBtn = document.getElementById('submitComment');
+
+    if (!input || !charCount || !submitBtn) {
+        console.warn('评论表单元素未找到，稍后重试');
+        return;
+    }
+
+    console.log('设置评论监听器...');
 
     // 字符计数
     input.addEventListener('input', () => {
@@ -348,25 +380,45 @@ function setupCommentListeners() {
     // 提交评论
     submitBtn.addEventListener('click', async () => {
         const content = input.value.trim();
-        if (!content) return;
+        if (!content) {
+            alert('请输入评论内容');
+            return;
+        }
+
+        if (!currentCommentManager) {
+            alert('评论系统未初始化，请先选择一道题目');
+            return;
+        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = '发送中...';
+        console.log('开始发送评论...');
 
         try {
-            await currentCommentManager.addComment(content);
+            console.log('评论内容:', content);
+            const newComment = await currentCommentManager.addComment(content);
+            console.log('评论发送成功:', newComment);
+            
             input.value = '';
             charCount.textContent = '0';
-            submitBtn.textContent = '发送';
             
             // 重新加载评论
             const comments = await currentCommentManager.loadComments();
+            console.log('重新加载评论列表，共', comments.length, '条');
             renderComments(comments);
             updateCommentCount();
-        } catch (error) {
-            alert('发送失败，请重试');
-            submitBtn.disabled = false;
+            
+            // 恢复按钮状态
             submitBtn.textContent = '发送';
+            submitBtn.disabled = true; // 因为输入框已清空
+            
+            // 显示成功提示
+            showToast('评论发送成功！');
+        } catch (error) {
+            console.error('发送评论失败:', error);
+            alert('发送失败: ' + (error.message || '未知错误'));
+            submitBtn.textContent = '发送';
+            submitBtn.disabled = false;
         }
     });
 
@@ -429,10 +481,29 @@ function initComments(problemId) {
 }
 
 // 页面加载时初始化
+let listenersSetup = false;
+
 window.addEventListener('load', () => {
+    console.log('评论系统开始初始化...');
     initFirebase();
-    setupCommentListeners();
+    
+    // 只设置一次监听器
+    if (!listenersSetup) {
+        setupCommentListeners();
+        listenersSetup = true;
+        console.log('评论监听器已设置');
+    }
 });
+
+// 如果 load 事件已经触发，立即初始化
+if (document.readyState === 'complete') {
+    console.log('页面已加载，立即初始化评论系统');
+    initFirebase();
+    if (!listenersSetup) {
+        setupCommentListeners();
+        listenersSetup = true;
+    }
+}
 
 // 导出给全局使用
 window.initComments = initComments;

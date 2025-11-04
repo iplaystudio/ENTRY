@@ -1257,3 +1257,30 @@ body {
         padding: 12px;
     }
 }
+
+/* ============================================
+   Toast 提示样式
+   ============================================ */
+.comment-toast {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 10001;
+    transition: bottom 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.comment-toast.show {
+    bottom: 30px;
+}
+
+[data-theme="dark"] .comment-toast {
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+}
