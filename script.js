@@ -213,6 +213,11 @@ async function loadProblem(problem) {
         
         preloadAdjacentProblems(problem);
         
+        // 初始化评论系统
+        if (typeof window.initComments === 'function') {
+            window.initComments(problem.id);
+        }
+        
     } catch (error) {
         console.error('加载题目时发生错误:', error);
         showError('加载题目失败，请重试');
@@ -238,7 +243,7 @@ function showProblemContent(problem) {
     const plainTitle = problem.title.replace(/~~/g, '');
     titleElement.textContent = `${problem.id}. ${plainTitle}`;
 
-    switchTab('problem');
+    switchTab('problemTab');
 }
 
 function createLoadingHTML() {
@@ -370,9 +375,14 @@ function switchTab(tab) {
         pane.classList.remove('active');
     });
     
-    const targetPane = tab === 'problem' 
-        ? document.getElementById('problemTab')
-        : document.getElementById('solutionTab');
+    let targetPane;
+    if (tab === 'problemTab') {
+        targetPane = document.getElementById('problemTab');
+    } else if (tab === 'solutionTab') {
+        targetPane = document.getElementById('solutionTab');
+    } else if (tab === 'commentTab') {
+        targetPane = document.getElementById('commentTab');
+    }
     
     if (targetPane) {
         targetPane.classList.add('active');
