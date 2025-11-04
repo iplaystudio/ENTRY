@@ -1,3 +1,4 @@
+//简单的打印题不用多说
 #include<stdio.h>
 
 int main() {
