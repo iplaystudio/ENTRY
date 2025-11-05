@@ -69,6 +69,53 @@ function initLocalStorage() {
 // 匿名用户管理
 // ============================================
 
+// 同步用户资料到 Firebase
+async function syncUserProfileToFirebase() {
+    if (useLocalStorage || !database) {
+        return; // 如果使用本地存储或 Firebase 未初始化，不同步
+    }
+    
+    try {
+        const userId = getAnonymousUserId();
+        const username = getAnonymousUsername();
+        const avatar = getAnonymousAvatar();
+        
+        const profileRef = database.ref(`userProfiles/${userId}`);
+        await profileRef.set({
+            username: username,
+            avatar: avatar,
+            lastUpdated: Date.now()
+        });
+        console.log('✅ 用户资料已同步到云端');
+    } catch (error) {
+        console.warn('⚠️ 同步用户资料失败:', error);
+    }
+}
+
+// 从 Firebase 加载用户资料
+async function loadUserProfileFromFirebase() {
+    if (useLocalStorage || !database) {
+        return; // 如果使用本地存储或 Firebase 未初始化，不加载
+    }
+    
+    try {
+        const userId = getAnonymousUserId();
+        const profileRef = database.ref(`userProfiles/${userId}`);
+        const snapshot = await profileRef.once('value');
+        const profile = snapshot.val();
+        
+        if (profile) {
+            // 从云端恢复用户资料
+            localStorage.setItem('anonymous_username', profile.username);
+            localStorage.setItem('anonymous_avatar', profile.avatar);
+            updateUserProfileDisplay();
+            console.log('✅ 已从云端加载用户资料');
+        }
+    } catch (error) {
+        console.warn('⚠️ 加载用户资料失败:', error);
+    }
+}
+
 function getAnonymousUserId() {
     let userId = localStorage.getItem('anonymous_user_id');
     if (!userId) {
@@ -93,6 +140,8 @@ function getAnonymousUsername() {
 
 function setAnonymousUsername(username) {
     localStorage.setItem('anonymous_username', username);
+    // 同步到 Firebase
+    syncUserProfileToFirebase();
     updateUserProfileDisplay();
 }
 
@@ -113,6 +162,8 @@ function getAnonymousAvatar() {
 function setAnonymousAvatar(avatar) {
     // 保存头像（emoji 或 Base64 图片数据）
     localStorage.setItem('anonymous_avatar', avatar);
+    // 同步到 Firebase
+    syncUserProfileToFirebase();
     updateUserProfileDisplay();
 }
 
@@ -125,6 +176,8 @@ function isAvatarImage() {
 function setAvatarAsImage(url) {
     // 直接保存图片数据（Base64 或 URL），不需要额外标记
     localStorage.setItem('anonymous_avatar', url);
+    // 同步到 Firebase
+    syncUserProfileToFirebase();
     updateUserProfileDisplay();
 }
 
@@ -842,6 +895,9 @@ function waitForFirebase(callback, maxAttempts = 50) {
 function initializeCommentSystem() {
     console.log('评论系统开始初始化...');
     initFirebase();
+    
+    // 从云端加载用户资料
+    loadUserProfileFromFirebase();
     
     // 只设置一次监听器
     if (!listenersSetup) {
