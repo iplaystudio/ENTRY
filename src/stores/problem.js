@@ -59,7 +59,7 @@ export const useProblemStore = defineStore('problem', () => {
       // }
 
       // 从服务器加载
-      const response = await fetch(`/${PATHS.PROBLEM}/${problem.file}.md`)
+      const response = await fetch(`${import.meta.env.BASE_URL}${PATHS.PROBLEM}/${problem.file}.md`)
       if (!response.ok) {
         console.error('加载失败:', response.status, response.statusText)
         throw new Error(`加载题目失败: ${response.status}`)
@@ -92,7 +92,7 @@ export const useProblemStore = defineStore('problem', () => {
       // }
 
       // 从服务器加载
-      const response = await fetch(`/${PATHS.SOLUTION}/${problem.file}.c`)
+      const response = await fetch(`${import.meta.env.BASE_URL}${PATHS.SOLUTION}/${problem.file}.c`)
       if (!response.ok) {
         console.error('加载题解失败:', response.status, response.statusText)
         throw new Error(`加载题解失败: ${response.status}`)

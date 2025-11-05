@@ -30,10 +30,11 @@ export function useMarkdown() {
     try {
       let html = marked.parse(content)
       
-      // 修复图片路径: 将 ./图片名 转换为 /Problem/图片名
+      // 修复图片路径: 将 ./图片名 转换为 BASE_URL/Problem/图片名
+      const baseUrl = import.meta.env.BASE_URL
       html = html.replace(
         /<img([^>]*?)src=["']\.\/([^"']+)["']/g,
-        '<img$1src="/Problem/$2"'
+        `<img$1src="${baseUrl}Problem/$2"`
       )
       
       return html
