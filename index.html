@@ -38,6 +38,7 @@
     <!-- Firebase SDK - 必须在 comments.js 之前加载 -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <!-- 不再使用 Storage，改用 Base64 存储图片（完全免费）-->
 </head>
 <body>
     <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
@@ -137,10 +138,17 @@
                         <div id="commentTab" class="tab-pane" role="tabpanel" aria-labelledby="comment-tab">
                             <div class="content-box">
                                 <div id="commentSection" class="comment-section">
+                                    <div class="user-profile-bar">
+                                        <div class="user-profile-info">
+                                            <span class="user-avatar-display" id="userAvatarDisplay">😀</span>
+                                            <span class="user-name-display" id="userNameDisplay">匿名用户</span>
+                                        </div>
+                                        <button id="editProfileBtn" class="btn-edit-profile">✏️ 修改</button>
+                                    </div>
                                     <div class="comment-form">
                                         <textarea 
                                             id="commentInput" 
-                                            placeholder="发表你的匿名评论..." 
+                                            placeholder="b站虽然会变味，但永远不会倒闭(雾)..." 
                                             maxlength="500"
                                             rows="4"
                                         ></textarea>
@@ -159,6 +167,71 @@
                 </article>
             </div>
         </main>
+    </div>
+
+    <!-- 用户资料编辑弹窗 -->
+    <div id="profileModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content profile-modal">
+            <div class="modal-header">
+                <h3>修改我的资料</h3>
+                <button class="modal-close" id="closeProfileModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-edit-section">
+                    <label>选择头像类型</label>
+                    <div class="avatar-type-tabs">
+                        <button class="avatar-type-tab active" data-type="emoji">😊 表情</button>
+                        <button class="avatar-type-tab" data-type="image">🏞️ 图片</button>
+                    </div>
+                </div>
+                <div class="profile-edit-section" id="emojiAvatarSection">
+                    <label>选择表情头像</label>
+                    <div class="avatar-grid" id="avatarGrid">
+                        <!-- 头像选项会动态生成 -->
+                    </div>
+                </div>
+                <div class="profile-edit-section" id="imageAvatarSection" style="display: none;">
+                    <label>上传头像图片</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input 
+                            type="file" 
+                            id="avatarFileInput" 
+                            accept="image/*"
+                            style="display: none;"
+                        />
+                        <div class="upload-prompt">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">点击选择图片</div>
+                            <div class="upload-hint">支持 JPG、PNG、GIF，最大 5MB</div>
+                        </div>
+                    </div>
+                    <div class="avatar-preview" id="avatarPreview" style="display: none;">
+                        <div class="avatar-preview-placeholder">预览区域</div>
+                    </div>
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">上传中...</div>
+                    </div>
+                </div>
+                <div class="profile-edit-section">
+                    <label>昵称</label>
+                    <input 
+                        type="text" 
+                        id="nicknameInput" 
+                        placeholder="输入你的昵称" 
+                        maxlength="20"
+                        class="profile-input"
+                    />
+                    <div class="input-hint">最多20个字符</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveProfileBtn" class="btn-primary">保存</button>
+                <button id="cancelProfileBtn" class="btn-secondary">取消</button>
+            </div>
+        </div>
     </div>
 
     <script src="comments.js"></script>

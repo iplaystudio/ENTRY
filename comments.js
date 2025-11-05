@@ -20,6 +20,7 @@ const isExampleConfig = firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConf
 
 // 初始化 Firebase
 let database = null;
+// 不再使用 Firebase Storage，头像使用 Base64 存储（完全免费）
 let initialized = false;
 
 function initFirebase() {
@@ -42,6 +43,7 @@ function initFirebase() {
             firebase.initializeApp(firebaseConfig);
         }
         database = firebase.database();
+        // 不再使用 Firebase Storage，改用 Base64 存储（完全免费）
         initialized = true;
         console.log('✅ Firebase 初始化成功，评论已同步到云端');
     } catch (error) {
@@ -89,16 +91,348 @@ function getAnonymousUsername() {
     return username;
 }
 
+function setAnonymousUsername(username) {
+    localStorage.setItem('anonymous_username', username);
+    updateUserProfileDisplay();
+}
+
 function getAnonymousAvatar() {
     const avatars = ['😀', '😃', '😄', '😁', '😆', '😊', '😎', '🤓', '🤗', '🥳', 
                       '😺', '😸', '😹', '😻', '🐶', '🐱', '🐭', '🐹', '🐰', '🦊',
-                      '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔'];
+                      '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+                      '🦄', '🦋', '🐙', '🦖', '🦕', '🐉', '🌸', '🌺', '🌻', '🌹',
+                      '⭐', '🌟', '✨', '💫', '🔥', '💧', '🌈', '☀️', '🌙', '⚡'];
     let avatar = localStorage.getItem('anonymous_avatar');
     if (!avatar) {
         avatar = avatars[Math.floor(Math.random() * avatars.length)];
         localStorage.setItem('anonymous_avatar', avatar);
     }
     return avatar;
+}
+
+function setAnonymousAvatar(avatar) {
+    // 保存头像（emoji 或 Base64 图片数据）
+    localStorage.setItem('anonymous_avatar', avatar);
+    updateUserProfileDisplay();
+}
+
+function isAvatarImage() {
+    const avatar = getAnonymousAvatar();
+    // 检查是否为图片 URL（http/https）或 Base64 图片数据
+    return avatar && (avatar.startsWith('http') || avatar.startsWith('data:image/'));
+}
+
+function setAvatarAsImage(url) {
+    // 直接保存图片数据（Base64 或 URL），不需要额外标记
+    localStorage.setItem('anonymous_avatar', url);
+    updateUserProfileDisplay();
+}
+
+function updateUserProfileDisplay() {
+    const avatarDisplay = document.getElementById('userAvatarDisplay');
+    const nameDisplay = document.getElementById('userNameDisplay');
+    
+    if (avatarDisplay) {
+        const avatar = getAnonymousAvatar();
+        if (isAvatarImage()) {
+            avatarDisplay.innerHTML = `<img src="${avatar}" alt="头像" onerror="this.parentElement.textContent='😀'">`;
+        } else {
+            avatarDisplay.textContent = avatar;
+        }
+    }
+    
+    if (nameDisplay) {
+        nameDisplay.textContent = getAnonymousUsername();
+    }
+}
+
+function getAllAvatars() {
+    return ['😀', '😃', '😄', '😁', '😆', '😊', '😎', '🤓', '🤗', '🥳', 
+            '😺', '😸', '😹', '😻', '🐶', '🐱', '🐭', '🐹', '🐰', '🦊',
+            '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+            '🦄', '🦋', '🐙', '🦖', '🦕', '🐉', '🌸', '🌺', '🌻', '🌹',
+            '⭐', '🌟', '✨', '💫', '🔥', '💧', '🌈', '☀️', '🌙', '⚡'];
+}
+
+// ============================================
+// 用户资料编辑
+// ============================================
+
+let uploadedImageUrl = null;
+
+async function uploadAvatarImage(file) {
+    // 验证文件
+    if (!file) {
+        throw new Error('请选择文件');
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        throw new Error('请选择图片文件');
+    }
+    
+    // 限制文件大小为 200KB（Base64 存储在数据库中）
+    if (file.size > 200 * 1024) {
+        throw new Error('图片大小不能超过 200KB\n建议使用 tinypng.com 压缩图片');
+    }
+    
+    const progressBar = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const progressContainer = document.getElementById('uploadProgress');
+    
+    try {
+        progressContainer.style.display = 'block';
+        progressText.textContent = '正在处理图片...';
+        
+        // 使用 FileReader 转换为 Base64
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const progress = (e.loaded / e.total) * 100;
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = `处理中... ${Math.round(progress)}%`;
+                }
+            };
+            
+            reader.onload = (e) => {
+                const base64String = e.target.result;
+                progressBar.style.width = '100%';
+                progressText.textContent = '处理完成！';
+                
+                uploadedImageUrl = base64String;
+                updateAvatarPreview(base64String);
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 1000);
+                
+                resolve(base64String);
+            };
+            
+            reader.onerror = (error) => {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                reject(new Error('读取文件失败'));
+            };
+            
+            // 开始读取文件为 Base64
+            reader.readAsDataURL(file);
+        });
+        
+    } catch (error) {
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        throw error;
+    }
+}
+
+function showProfileModal() {
+    const modal = document.getElementById('profileModal');
+    const avatarGrid = document.getElementById('avatarGrid');
+    const nicknameInput = document.getElementById('nicknameInput');
+    const emojiSection = document.getElementById('emojiAvatarSection');
+    const imageSection = document.getElementById('imageAvatarSection');
+    
+    // 重置上传状态
+    uploadedImageUrl = null;
+    const preview = document.getElementById('avatarPreview');
+    preview.style.display = 'none';
+    preview.innerHTML = '<div class="avatar-preview-placeholder">预览区域</div>';
+    
+    // 显示当前资料
+    nicknameInput.value = getAnonymousUsername();
+    
+    const currentAvatar = getAnonymousAvatar();
+    const isImage = isAvatarImage();
+    
+    // 设置默认标签
+    if (isImage) {
+        document.querySelector('.avatar-type-tab[data-type="image"]').click();
+        updateAvatarPreview(currentAvatar);
+        preview.style.display = 'flex';
+        uploadedImageUrl = currentAvatar;
+    } else {
+        document.querySelector('.avatar-type-tab[data-type="emoji"]').click();
+        // 渲染表情头像选项
+        avatarGrid.innerHTML = getAllAvatars().map(avatar => 
+            `<div class="avatar-option ${avatar === currentAvatar ? 'selected' : ''}" data-avatar="${avatar}">${avatar}</div>`
+        ).join('');
+        
+        // 添加头像选择事件
+        avatarGrid.querySelectorAll('.avatar-option').forEach(option => {
+            option.addEventListener('click', () => {
+                avatarGrid.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function updateAvatarPreview(url) {
+    const preview = document.getElementById('avatarPreview');
+    preview.style.display = 'flex';
+    if (url && url.trim()) {
+        preview.innerHTML = `<img src="${url}" alt="头像预览" onerror="this.parentElement.innerHTML='<div class=\\'avatar-preview-placeholder\\'>图片加载失败</div>'">`;
+    } else {
+        preview.innerHTML = '<div class="avatar-preview-placeholder">预览区域</div>';
+    }
+}
+
+function hideProfileModal() {
+    const modal = document.getElementById('profileModal');
+    modal.style.display = 'none';
+}
+
+function saveProfile() {
+    const nicknameInput = document.getElementById('nicknameInput');
+    const selectedAvatar = document.querySelector('.avatar-option.selected');
+    const activeTab = document.querySelector('.avatar-type-tab.active');
+    
+    const newNickname = nicknameInput.value.trim();
+    if (!newNickname) {
+        alert('请输入昵称');
+        return;
+    }
+    
+    if (newNickname.length > 20) {
+        alert('昵称最多20个字符');
+        return;
+    }
+    
+    // 根据选择的标签类型保存头像
+    if (activeTab.dataset.type === 'emoji') {
+        if (selectedAvatar) {
+            setAnonymousAvatar(selectedAvatar.dataset.avatar);
+        }
+    } else {
+        // 图片头像
+        if (!uploadedImageUrl) {
+            alert('请先上传图片');
+            return;
+        }
+        setAvatarAsImage(uploadedImageUrl);
+    }
+    
+    setAnonymousUsername(newNickname);
+    
+    hideProfileModal();
+    showToast('资料已更新！');
+}
+
+function setupProfileListeners() {
+    const editBtn = document.getElementById('editProfileBtn');
+    const closeBtn = document.getElementById('closeProfileModal');
+    const saveBtn = document.getElementById('saveProfileBtn');
+    const cancelBtn = document.getElementById('cancelProfileBtn');
+    const modal = document.getElementById('profileModal');
+    const avatarTypeTabs = document.querySelectorAll('.avatar-type-tab');
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    const avatarFileInput = document.getElementById('avatarFileInput');
+    const emojiSection = document.getElementById('emojiAvatarSection');
+    const imageSection = document.getElementById('imageAvatarSection');
+    
+    if (editBtn) {
+        editBtn.addEventListener('click', showProfileModal);
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideProfileModal);
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveProfile);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideProfileModal);
+    }
+    
+    // 标签切换
+    avatarTypeTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            avatarTypeTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            if (tab.dataset.type === 'emoji') {
+                emojiSection.style.display = 'block';
+                imageSection.style.display = 'none';
+            } else {
+                emojiSection.style.display = 'none';
+                imageSection.style.display = 'block';
+            }
+        });
+    });
+    
+    // 点击上传区域触发文件选择
+    if (fileUploadArea) {
+        fileUploadArea.addEventListener('click', () => {
+            avatarFileInput.click();
+        });
+        
+        // 拖放功能
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = '#4285f4';
+            fileUploadArea.style.backgroundColor = '#f0f7ff';
+        });
+        
+        fileUploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = '#ddd';
+            fileUploadArea.style.backgroundColor = 'transparent';
+        });
+        
+        fileUploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            fileUploadArea.style.borderColor = '#ddd';
+            fileUploadArea.style.backgroundColor = 'transparent';
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                try {
+                    const downloadURL = await uploadAvatarImage(file);
+                    uploadedImageUrl = downloadURL;
+                    updateAvatarPreview(downloadURL);
+                    showToast('图片上传成功！');
+                } catch (error) {
+                    alert('上传失败：' + error.message);
+                }
+            }
+        });
+    }
+    
+    // 文件选择处理
+    if (avatarFileInput) {
+        avatarFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    const downloadURL = await uploadAvatarImage(file);
+                    uploadedImageUrl = downloadURL;
+                    updateAvatarPreview(downloadURL);
+                    showToast('图片上传成功！');
+                } catch (error) {
+                    alert('上传失败：' + error.message);
+                }
+            }
+        });
+    }
+    
+    // 点击遮罩关闭
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideProfileModal();
+            }
+        });
+    }
+    
+    // 更新显示
+    updateUserProfileDisplay();
 }
 
 // ============================================
@@ -310,10 +644,16 @@ function renderComments(comments) {
 
     container.innerHTML = comments.map(comment => {
         const isLiked = currentCommentManager.isLikedByCurrentUser(comment);
+        // 检查是否为图片头像（支持 URL 和 Base64）
+        const isImageAvatar = comment.avatar && (comment.avatar.startsWith('http') || comment.avatar.startsWith('data:image/'));
+        const avatarHtml = isImageAvatar 
+            ? `<img src="${comment.avatar}" alt="头像" onerror="this.parentElement.textContent='😀'">` 
+            : comment.avatar;
+        
         return `
             <div class="comment-item" data-id="${comment.id}">
                 <div class="comment-header">
-                    <div class="comment-avatar">${comment.avatar}</div>
+                    <div class="comment-avatar">${avatarHtml}</div>
                     <div class="comment-meta">
                         <div class="comment-author">${escapeHtml(comment.author)}</div>
                         <div class="comment-time">${formatTime(comment.timestamp)}</div>
@@ -330,7 +670,6 @@ function renderComments(comments) {
         `;
     }).join('');
 }
-
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -507,6 +846,7 @@ function initializeCommentSystem() {
     // 只设置一次监听器
     if (!listenersSetup) {
         setupCommentListeners();
+        setupProfileListeners();
         listenersSetup = true;
         console.log('评论监听器已设置');
     }
