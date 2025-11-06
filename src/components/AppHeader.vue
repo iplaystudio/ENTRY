@@ -17,7 +17,7 @@
           @click="$emit('toggle-theme')"
           aria-label="切换主题"
         >
-          <span class="theme-icon">{{ isDark ? '☀️' : '🌙' }}</span>
+          <span class="theme-icon">{{ isDark ? '🌙' : '☀️' }}</span>
         </button>
       </div>
     </div>
@@ -66,10 +66,6 @@ const isDark = inject('isDark', false)
       text-align: center;
     }
 
-    .mobile-menu-btn {
-      display: none !important; // 桌面端强制隐藏侧边栏按钮
-    }
-
     .header-actions {
       display: flex;
       gap: 0.5rem;
@@ -101,6 +97,11 @@ const isDark = inject('isDark', false)
         }
       }
 
+      // 桌面端隐藏移动菜单按钮
+      &.mobile-menu-btn {
+        display: none;
+      }
+
       .theme-icon {
         font-size: 1.25rem;
         color: var(--text-color);
@@ -115,12 +116,12 @@ const isDark = inject('isDark', false)
     padding: 1rem;
 
     .header-content {
-      .mobile-menu-btn {
-        display: flex;
-      }
-
       h1 {
         font-size: 1rem;
+      }
+
+      .btn.mobile-menu-btn {
+        display: flex;
       }
     }
   }
