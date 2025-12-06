@@ -63,8 +63,6 @@ const handleSelectProblem = (problemId) => {
 </script>
 
 <style lang="scss">
-@import './styles/variables.scss';
-
 .app-container {
   display: flex;
   min-height: 100vh;

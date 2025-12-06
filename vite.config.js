@@ -9,6 +9,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler'
+      }
+    }
+  },
   base: process.env.NODE_ENV === 'production' ? '/NENTRY/' : '/',
   build: {
     outDir: 'dist',
